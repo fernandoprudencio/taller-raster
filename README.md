@@ -10,6 +10,8 @@ library(tidyverse)
 library(Hmisc)
 library(raster)
 library(ncdf4)
+library(tmap)
+library(cptcity)
 ```
 
 ## Create time series within a dataframe
@@ -84,3 +86,43 @@ grd.clim <- sapply(
     ## names      :        Jan,        Feb,        Mar,        Apr,        May,        Jun,        Jul,        Aug,        Sep,        Oct,        Nov,        Dec 
     ## min values : 0.01531051, 0.06828829, 0.07635154, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000 
     ## max values :  1029.3501,  1155.5221,   951.1259,   867.9878,   519.9894,   430.6154,   284.2223,   296.0526,   339.5458,   581.7537,   596.5540,   753.7319
+
+## Save climatology raster as .grd format
+
+Save the climatology raster as **.grd** format to keep the name of the
+bands (also see **netCDF** format)
+
+``` r
+writeRaster(grd.clim, "data/raster/pisco_clim.grd", overwrite = T)
+```
+
+## Plot average conditions for February
+
+In this step, we going to use the tmap package and the **World** vector
+
+``` r
+data("World")
+tmap_mode("plot")
+tm_shape(grd.clim[["Feb"]]) +
+  tm_raster(
+    title = "pp [mm]",
+    style = "kmeans", n = 5,
+    palette = cpt(
+      pal = "ncl_precip_diff_12lev", n = 100,
+      colorRampPalette = FALSE, rev = T
+    ),
+    legend.hist = TRUE
+  ) +
+  tm_shape(World, bbox = World %>% filter(name == "Peru")) +
+  tm_borders(col = "black") +
+  tm_legend(outside = TRUE, hist.width = 2) +
+  tm_grid(
+    labels.inside.frame = FALSE,
+    x = seq(-85, -65, 5),
+    y = seq(-20, 5, 5),
+    projection = "+proj=longlat"
+  ) +
+  tm_layout(bg.color = "gray")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
