@@ -1,6 +1,7 @@
 HOW TO CALCULATE CLIMATOLOGY FROM A GRIDDED DATASET
 ================
-16-08-2020
+Fernando Prudencio
+August 17, 2020
 
 ## Load libraries
 
@@ -17,8 +18,8 @@ Before calculating the **climatology** of any variable, for a given
 period (eg: **1981-2016**), first a time series field is created within
 a dataframe, in addition to an identifier field **\[id\]**.
 
-Build dataframe with a date field and an identity field for period from
-1981 to 2016
+Build a data frame with a date field and an identity field for the
+period from 1981 to 2016 (by month)
 
 ``` r
 df <- tibble(
