@@ -1,5 +1,6 @@
 \data
 .Rproj.user
+\README_files
 *.Rmd
 scripts/.Rhistory
 .Rhistory
