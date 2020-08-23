@@ -1,0 +1,89 @@
+---
+title: "HOW TO CALCULATE CLIMATOLOGY FROM A GRIDDED DATASET"
+author: "Fernando Prudencio"
+date: "August 17, 2020"
+output: github_document
+---
+## Load libraries
+```{r, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(Hmisc)
+library(raster)
+library(ncdf4)
+library(tmap)
+library(cptcity)
+```
+## Create time series within a dataframe
+Before calculating the **climatology** of any variable, for a given period (eg: **1981-2016**), first a time series field is created within a dataframe, in addition to an identifier field **[id]**.
+
+Build a data frame with a date field and an identity field for the period from 1981 to 2016 (by month)
+```{r message = FALSE, warning = FALSE}
+df <- tibble(
+  date = seq(as.Date("1981-01-01"), as.Date("2016-12-01"), by = "1 month")
+) %>%
+  mutate(id = 1:n())
+```
+```{r, echo = FALSE}
+head(df)
+```
+## Build a function to calculate climatology
+In this step, we are going to build a function to calculate climatology without considering years of extreme drought
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+fun.clim <- function(month, years.omit, data) {
+  grd.mt <- df %>%
+    filter(
+      str_sub(date, 6, 7) == month &
+        str_sub(date, 1, 4) %nin% years.omit
+    )
+
+  data[[grd.mt$id]] %>%
+    "*"(1) %>%
+    mean(na.rm = T) %>%
+    return()
+}
+```
+## Apply fun.clim function with sapply()
+Apply **fun.clim** function to calculate average conditions between january and december. Omitted years were 2005, 2010 and 2016, as mentioned in ***Marengo and Espinoza (2016)***. For this example, we going to use the Pisco v2.1 gridded precipitation dataset.
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+grd.clim <- sapply(
+  sprintf("%02d", 1:12),
+  FUN = fun.clim,
+  years.omit = c(2005, 2010, 2016),
+  data = brick("data/raster/pp/pisco-pp.nc")
+) %>% stack() %>% "*"(1) %>%
+  "names<-"(sprintf(month.abb))
+```
+```{r echo = FALSE}
+grd.clim
+```
+## Save climatology raster as .grd format
+Save the climatology raster as **.grd** format to keep the name of the bands (also see **netCDF** format)
+```{r include = TRUE}
+writeRaster(grd.clim, "data/raster/pisco_clim.grd", overwrite = T)
+```
+## Plot average conditions for February
+In this step, we going to use the tmap package and the **World** vector
+```{r message=FALSE, warning=FALSE}
+data("World")
+tmap_mode("plot")
+tm_shape(grd.clim[["Feb"]]) +
+  tm_raster(
+    title = "pp [mm]",
+    style = "kmeans", n = 5,
+    palette = cpt(
+      pal = "ncl_precip_diff_12lev", n = 100,
+      colorRampPalette = FALSE, rev = T
+    ),
+    legend.hist = TRUE
+  ) +
+  tm_shape(World, bbox = World %>% filter(name == "Peru")) +
+  tm_borders(col = "black") +
+  tm_legend(outside = TRUE, hist.width = 2) +
+  tm_grid(
+    labels.inside.frame = FALSE,
+    x = seq(-85, -65, 5),
+    y = seq(-20, 5, 5),
+    projection = "+proj=longlat"
+  ) +
+  tm_layout(bg.color = "gray")
+```
