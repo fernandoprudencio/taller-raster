@@ -1,5 +1,9 @@
 HOW TO CALCULATE CLIMATOLOGY FROM A GRIDDED DATASET
 ================
+
+[![GitHub
+commit](https://img.shields.io/github/last-commit/fernandoprudencio/taller-raster)](https://github.com/fernandoprudencio/taller-raster/commits/master)
+
 Fernando Prudencio
 August 17, 2020
 
